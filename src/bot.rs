@@ -190,42 +190,54 @@ fn eval(state: &GameState, maximize: bool) -> f32 {
     value
 }
 
-fn minimax(state: &mut GameState, depth: i32, maximize: bool) -> f32 {
+fn alphabeta(state: &mut GameState, depth: i32, alpha: f32, beta: f32, maximize: bool) -> f32 {
     let evaluation = eval(state, maximize);
     if depth == 0 || f32::abs(evaluation) > 1000.0 {
-        // println!("State:\n{}Eval: {}", state, eval(state, maximize));
         return evaluation;
     }
 
     let moves = move_gen(state);
     if maximize {
         let mut value = -f32::INFINITY;
+        let mut alpha = alpha;
         for mv in moves {
             state.board[mv.0][mv.1] = Tile::O;
-            value = f32::max(value, minimax(state, depth - 1, !maximize));
+            value = f32::max(value, alphabeta(state, depth - 1, alpha, beta, !maximize));
             state.board[mv.0][mv.1] = Tile::Empty;
+
+            if value > beta {
+                break;
+            }
+            alpha = f32::max(alpha, value);
         }
         return value;
     } else {
         let mut value = f32::INFINITY;
+        let mut beta = beta;
         for mv in moves {
             state.board[mv.0][mv.1] = Tile::X;
-            value = f32::min(value, minimax(state, depth - 1, !maximize));
+            value = f32::min(value, alphabeta(state, depth - 1, alpha, beta, !maximize));
             state.board[mv.0][mv.1] = Tile::Empty;
+
+            if value < alpha {
+                break;
+            }
+            beta = f32::min(beta, value);
         }
         return value;
     }
 }
 
+// TODO: remove maximize, it is included in the state.
 pub fn bot_move(state: &mut GameState) -> (usize, usize) {
     // ------------------------------------------------------------------------
     // let mut test = GameState::new(false);
     // let get_move = false;
     //
-    // test.board[0][0] = Tile::O;
-    // test.board[1][1] = Tile::O;
+    // // test.board[1][1] = Tile::O;
     // test.board[2][2] = Tile::O;
-    // test.board[3][3] = Tile::O;
+    // test.board[3][2] = Tile::O;
+    // test.board[5][2] = Tile::O;
     // // test.board[8][8] = Tile::O;
     // // test.board[8][8] = Tile::X;
     //
@@ -239,11 +251,13 @@ pub fn bot_move(state: &mut GameState) -> (usize, usize) {
     //     let moves = move_gen(&test);
     //     let mut best_move = (0, 0);
     //     let mut value = -f32::INFINITY;
+    //     let alpha = -f32::INFINITY;
+    //     let  beta = f32::INFINITY;
     //     for mv in moves {
     //         test.board[mv.0][mv.1] = Tile::O;
     //
-    //         let new_val = minimax(&mut test, 1, false);
-    //         println!("state:\n{}eval: {}", test, new_val);
+    //         let new_val = alphabeta(&mut test, 1, alpha, beta, false);
+    //         // println!("state:\n{}eval: {}", test, new_val);
     //         if new_val > value {
     //             value = new_val;
     //             best_move = mv;
@@ -253,31 +267,33 @@ pub fn bot_move(state: &mut GameState) -> (usize, usize) {
     //     }
     //     println!("val: {}, move: {:?}", value, best_move);
     //
-    //     println!("{}", test);
+    //     // println!("{}", test);
     //     test.board[best_move.0][best_move.1] = Tile::O;
     //     println!("{}", test);
     // } else {
-    //     // println!("eval {}", minimax(&mut test, 2, true));
-    //     println!("eval {}", eval(&test, false));
+    //     let alpha = -f32::INFINITY;
+    //     let beta = f32::INFINITY;
+    //     println!("eval {}", alphabeta(&mut test, 2, alpha, beta, false));
+    //     // println!("eval {}", eval(&test, false));
     // }
     //
     // panic!();
     // ------------------------------------------------------------------------
 
     let moves = move_gen(state);
-    // println!("{}", moves.len());
     let mut best_move = (0, 0);
     let mut value = -f32::INFINITY;
+    let alpha = -f32::INFINITY;
+    let beta = f32::INFINITY;
     for mv in moves {
         state.board[mv.0][mv.1] = Tile::O;
+        let new_val = alphabeta(state, 2, alpha, beta, false);
+        state.board[mv.0][mv.1] = Tile::Empty;
 
-        let new_val = minimax(state, 1, false);
         if new_val > value {
             value = new_val;
             best_move = mv;
         }
-
-        state.board[mv.0][mv.1] = Tile::Empty;
     }
     println!("Eval: {:.2}", value);
     best_move
