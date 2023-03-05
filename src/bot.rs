@@ -120,16 +120,16 @@ fn eval_line(line: Vec<Tile>, maximize: bool) -> f32 {
                     0 => 0.0,
                     1 => {
                         if player_turn {
-                            INF
+                            INF / 10.0
                         } else {
                             10.0
                         }
                     }
                     _ => {
                         if player_turn {
-                            INF
-                        } else {
                             INF / 10.0
+                        } else {
+                            100.0
                         }
                     }
                 }
