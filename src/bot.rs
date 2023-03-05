@@ -1,4 +1,5 @@
 use crate::state::{GameState, Tile};
+use macroquad::rand::ChooseRandom;
 
 const DIRS: [(i32, i32); 8] = [
     (-1, -1),
@@ -10,6 +11,9 @@ const DIRS: [(i32, i32); 8] = [
     (-1, 1),
     (-1, 0),
 ];
+
+const ALPHA: f32 = -f32::INFINITY;
+const BETA: f32 = f32::INFINITY;
 
 fn move_gen(state: &GameState) -> Vec<(usize, usize)> {
     let max_dist = 2;
@@ -42,6 +46,14 @@ fn move_gen(state: &GameState) -> Vec<(usize, usize)> {
             }
         }
     }
+    if result.is_empty() {
+        for x in 0..15 {
+            for y in 0..15 {
+                result.push((x, y));
+            }
+        }
+    }
+    result.shuffle();
 
     result
 }
@@ -233,6 +245,7 @@ pub fn bot_move(state: &mut GameState) -> (usize, usize) {
     // ------------------------------------------------------------------------
     // let mut test = GameState::new(false);
     // let get_move = false;
+    // let bot_move = false;
     //
     // // test.board[1][1] = Tile::O;
     // test.board[2][2] = Tile::O;
@@ -251,12 +264,10 @@ pub fn bot_move(state: &mut GameState) -> (usize, usize) {
     //     let moves = move_gen(&test);
     //     let mut best_move = (0, 0);
     //     let mut value = -f32::INFINITY;
-    //     let alpha = -f32::INFINITY;
-    //     let  beta = f32::INFINITY;
     //     for mv in moves {
     //         test.board[mv.0][mv.1] = Tile::O;
     //
-    //         let new_val = alphabeta(&mut test, 1, alpha, beta, false);
+    //         let new_val = alphabeta(&mut test, 1, ALPHA, BETA, false);
     //         // println!("state:\n{}eval: {}", test, new_val);
     //         if new_val > value {
     //             value = new_val;
@@ -271,10 +282,8 @@ pub fn bot_move(state: &mut GameState) -> (usize, usize) {
     //     test.board[best_move.0][best_move.1] = Tile::O;
     //     println!("{}", test);
     // } else {
-    //     let alpha = -f32::INFINITY;
-    //     let beta = f32::INFINITY;
-    //     println!("eval {}", alphabeta(&mut test, 2, alpha, beta, false));
-    //     // println!("eval {}", eval(&test, false));
+    //     println!("eval {}", alphabeta(&mut test, 2, ALPHA, BETA, true));
+    //     // println!("eval {}", eval(&test, bot_move));
     // }
     //
     // panic!();
@@ -282,19 +291,34 @@ pub fn bot_move(state: &mut GameState) -> (usize, usize) {
 
     let moves = move_gen(state);
     let mut best_move = (0, 0);
-    let mut value = -f32::INFINITY;
-    let alpha = -f32::INFINITY;
-    let beta = f32::INFINITY;
-    for mv in moves {
-        state.board[mv.0][mv.1] = Tile::O;
-        let new_val = alphabeta(state, 2, alpha, beta, false);
-        state.board[mv.0][mv.1] = Tile::Empty;
+    if !state.player_turn {
+        let mut value = -f32::INFINITY;
+        for mv in moves {
+            state.board[mv.0][mv.1] = Tile::O;
+            let new_val = alphabeta(state, 2, ALPHA, BETA, false);
+            state.board[mv.0][mv.1] = Tile::Empty;
 
-        if new_val > value {
-            value = new_val;
-            best_move = mv;
+            if new_val > value {
+                value = new_val;
+                best_move = mv;
+            }
         }
+        println!("Eval: {:.2}", value);
+    } else {
+        let mut value = f32::INFINITY;
+        for mv in moves {
+            state.board[mv.0][mv.1] = Tile::X;
+            let new_val = alphabeta(state, 2, ALPHA, BETA, true);
+            state.board[mv.0][mv.1] = Tile::Empty;
+
+            if new_val < value {
+                value = new_val;
+                best_move = mv;
+            }
+        }
+
+        println!("Eval: {:.2}", value);
     }
-    println!("Eval: {:.2}", value);
+
     best_move
 }
