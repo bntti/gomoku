@@ -99,7 +99,7 @@ fn eval_line(line: Vec<Tile>, maximize: bool) -> f32 {
             continue;
         }
 
-        let empty = (empty_before > 0) as i32 + (empty_after > 0) as i32;
+        let both_sides_empty = (empty_before > 0) && (empty_after > 0);
 
         let player_turn = (tile == Tile::O && maximize) || (tile == Tile::X && !maximize);
         let player_sign = if tile == Tile::O { 1.0 } else { -1.0 };
@@ -107,37 +107,39 @@ fn eval_line(line: Vec<Tile>, maximize: bool) -> f32 {
 
         if len == 1 {
             value += player_sign
-                * match empty {
-                    0 => 0.0,
-                    1 => 0.1,
-                    _ => 0.3,
+                * match both_sides_empty {
+                    false => 0.1,
+                    true => 0.3,
                 }
         } else if len == 2 {
             value += player_sign
-                * match empty {
-                    0 => 0.0,
-                    1 => 0.4,
-                    _ => 0.7,
+                * match both_sides_empty {
+                    false => 0.4,
+                    true => 0.7,
                 }
         } else if len == 3 {
             value += player_sign
-                * match empty {
-                    0 => 0.0,
-                    1 => 1.0,
-                    _ => 5.0,
+                * match both_sides_empty {
+                    false => 1.0,
+                    true => {
+                        if empty_before + empty_after >= 3 {
+                            7.0
+                        } else {
+                            3.0
+                        }
+                    }
                 }
         } else if len == 4 {
             value += player_sign
-                * match empty {
-                    0 => 0.0,
-                    1 => {
+                * match both_sides_empty {
+                    false => {
                         if player_turn {
                             INF / 10.0
                         } else {
                             10.0
                         }
                     }
-                    _ => {
+                    true => {
                         if player_turn {
                             INF / 10.0
                         } else {
