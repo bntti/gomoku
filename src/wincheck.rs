@@ -46,7 +46,7 @@ pub fn check_win(state: &GameState) -> bool {
         let mut line2 = vec![];
         for j in 0..15 {
             if i as i32 - j as i32 >= 0 {
-                line1.push(state.board[i - j][j])
+                line1.push(state.board[i - j][j]);
             };
             if i + j < 15 {
                 line2.push(state.board[i + j][j]);
@@ -67,7 +67,7 @@ pub fn check_win(state: &GameState) -> bool {
         let mut line2 = vec![];
         for j in 0..15 {
             if i as i32 - j as i32 >= 0 {
-                line1.push(state.board[i - j][14 - j])
+                line1.push(state.board[i - j][14 - j]);
             };
             if i + j < 15 {
                 line2.push(state.board[i + j][14 - j]);

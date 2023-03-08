@@ -4,15 +4,16 @@ use state::{GameState, Tile};
 use wincheck::check_win;
 
 mod bot;
+mod eval;
 mod state;
 mod wincheck;
 
 const BOT_VS_BOT: bool = false;
 const SHOW_RECOMMENDATION: bool = false;
 
-#[macroquad::main("BasicShapes")]
+#[macroquad::main("Gomoku")]
 async fn main() {
-    let mut state = GameState::new(true);
+    let mut state = GameState::new(false);
     rand::srand(macroquad::miniquad::date::now() as _);
 
     let mut prev_o_move = (-1, -1);
@@ -30,34 +31,34 @@ async fn main() {
 
         recommendation_frame += 1;
         let game_over = check_win(&state);
-        if state.player_turn && !BOT_VS_BOT && !game_over {
+        if state.x_turn && !BOT_VS_BOT && !game_over {
             let (mouse_x, mouse_y) = mouse_position();
             if is_mouse_button_down(MouseButton::Left) {
                 let x = f32::floor(mouse_x / tile_size) as usize;
                 let y = f32::floor(mouse_y / tile_size) as usize;
                 if x <= 14 && y <= 14 && state.board[x][y] == Tile::Empty {
                     state.board[x][y] = Tile::X;
-                    state.player_turn = false;
+                    state.x_turn = false;
                 }
                 prev_x_move = (x as i32, y as i32);
             }
-        } else if state.player_turn && BOT_VS_BOT && !game_over {
+        } else if state.x_turn && BOT_VS_BOT && !game_over {
             let (x, y) = bot_move(&mut state);
             prev_x_move = (x as i32, y as i32);
 
             if x <= 14 && y <= 14 && state.board[x][y] == Tile::Empty {
                 state.board[x][y] = Tile::X;
-                state.player_turn = false;
+                state.x_turn = false;
             } else {
                 panic!("Bot made illegal move");
             }
-        } else if !state.player_turn && !game_over {
+        } else if !state.x_turn && !game_over {
             let (x, y) = bot_move(&mut state);
             prev_o_move = (x as i32, y as i32);
 
             if x <= 14 && y <= 14 && state.board[x][y] == Tile::Empty {
                 state.board[x][y] = Tile::O;
-                state.player_turn = true;
+                state.x_turn = true;
             } else {
                 panic!("Bot made illegal move");
             }
@@ -94,14 +95,14 @@ async fn main() {
         }
 
         // Display previous move
-        if state.player_turn && prev_o_move.1 >= 0 {
-            let center_x = prev_o_move.0 as f32 * tile_size + tile_size / 2.0;
-            let center_y = prev_o_move.1 as f32 * tile_size + tile_size / 2.0;
+        if state.x_turn && prev_o_move.1 >= 0 {
+            let center_x = (prev_o_move.0 as f32).mul_add(tile_size, tile_size / 2.0);
+            let center_y = (prev_o_move.1 as f32).mul_add(tile_size, tile_size / 2.0);
             draw_circle(center_x, center_y, tile_size / 2.0 - padding, RED);
-        } else if !state.player_turn && prev_x_move.1 >= 0 {
+        } else if !state.x_turn && prev_x_move.1 >= 0 {
             let half_size = (tile_size) / 2.0 - padding;
-            let center_x = prev_x_move.0 as f32 * tile_size + tile_size / 2.0;
-            let center_y = prev_x_move.1 as f32 * tile_size + tile_size / 2.0;
+            let center_x = (prev_x_move.0 as f32).mul_add(tile_size, tile_size / 2.0);
+            let center_y = (prev_x_move.1 as f32).mul_add(tile_size, tile_size / 2.0);
             draw_line(
                 center_x - half_size,
                 center_y - half_size,
@@ -125,8 +126,8 @@ async fn main() {
             recommendation_frame = i32::min(recommendation_frame, 5000);
             let color = Color::new(0.0, 1.0, 0.0, recommendation_frame as f32 / 5000.0);
             let half_size = (tile_size) / 2.0 - padding;
-            let center_x = recommendation.0 as f32 * tile_size + tile_size / 2.0;
-            let center_y = recommendation.1 as f32 * tile_size + tile_size / 2.0;
+            let center_x = (recommendation.0 as f32).mul_add(tile_size, tile_size / 2.0);
+            let center_y = (recommendation.1 as f32).mul_add(tile_size, tile_size / 2.0);
             draw_line(
                 center_x - half_size,
                 center_y - half_size,
@@ -150,8 +151,8 @@ async fn main() {
             for y in 0..15 {
                 if state.board[x][y] == Tile::X {
                     let half_size = (tile_size) / 2.0 - padding;
-                    let center_x = x as f32 * tile_size + tile_size / 2.0;
-                    let center_y = y as f32 * tile_size + tile_size / 2.0;
+                    let center_x = (x as f32).mul_add(tile_size, tile_size / 2.0);
+                    let center_y = (y as f32).mul_add(tile_size, tile_size / 2.0);
                     draw_line(
                         center_x - half_size,
                         center_y - half_size,
@@ -170,13 +171,13 @@ async fn main() {
                     );
                 }
                 if state.board[x][y] == Tile::O {
-                    let center_x = x as f32 * tile_size + tile_size / 2.0;
-                    let center_y = y as f32 * tile_size + tile_size / 2.0;
+                    let center_x = (x as f32).mul_add(tile_size, tile_size / 2.0);
+                    let center_y = (y as f32).mul_add(tile_size, tile_size / 2.0);
                     draw_circle_lines(center_x, center_y, tile_size / 2.0 - padding, 1.0, RED);
                 }
             }
         }
 
-        next_frame().await
+        next_frame().await;
     }
 }

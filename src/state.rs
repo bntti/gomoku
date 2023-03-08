@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Tile {
     Empty,
     X,
@@ -9,14 +9,14 @@ pub enum Tile {
 }
 
 pub struct GameState {
-    pub player_turn: bool,
+    pub x_turn: bool,
     pub board: [[Tile; 15]; 15],
 }
 
 impl GameState {
-    pub fn new(player_start: bool) -> Self {
+    pub const fn new(player_start: bool) -> Self {
         Self {
-            player_turn: player_start,
+            x_turn: player_start,
             board: [[Tile::Empty; 15]; 15],
         }
     }
@@ -34,11 +34,11 @@ impl fmt::Display for GameState {
                     Tile::O => "O",
                     Tile::None => panic!(),
                 };
-                board_str.push_str(&format!("| {} ", tile_str));
+                board_str.push_str(&format!("| {tile_str} "));
             }
             board_str.push_str("|\n");
         }
 
-        write!(f, "{}", board_str)
+        write!(f, "{board_str}")
     }
 }
